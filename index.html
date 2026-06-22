@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بانگهێشتنامەی هاوسەرگیری</title>
+    
+    <style>
+        /* ------------------ پێناسەکردنی فۆنتی سەرچیا حەلەب ------------------ */
+        @font-face {
+            font-family: 'SarchiaHalab';
+            src: url('38_Sarchia_Halab.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap; 
+        }
+
+        /* ڕێکخستنی گشتی */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            /* Using dvh for modern mobile browsers to account for dynamic address bars */
+            min-height: 100vh;
+            min-height: 100dvh;
+            background-color: #f9f8f6;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.03' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E");
+            position: relative;
+            overflow-x: hidden;
+            font-family: 'SarchiaHalab', Arial, sans-serif;
+            color: #333;
+            line-height: 1.4; 
+        }
+
+        body::after {
+            content: "";
+            position: fixed; 
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; 
+            box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.02);
+            z-index: 1000;
+        }
+
+        /* ------------------ بەشی گوڵە جێگیرەکانی گۆشەکان ------------------ */
+        .floral-left, .floral-right {
+            position: absolute;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0;
+            /* Fluid scaling for background elements */
+            max-width: 35vw; 
+        }
+
+        .floral-left {
+            width: clamp(150px, 25vw, 350px);
+            top: -20px;
+            left: -40px;
+            animation: floralFadeInLeft 2s ease-in-out 1.7s forwards;
+        }
+
+        .floral-right {
+            width: clamp(100px, 15vw, 200px); 
+            bottom: -15px; 
+            right: -15px;
+            animation: floralFadeInRightBottom 2s ease-in-out 1.7s forwards;
+        }
+
+        .floral-bottom-left, .floral-top-right-secondary {
+            position: absolute;
+            width: clamp(180px, 25vw, 350px); 
+            pointer-events: none;
+            mix-blend-mode: multiply; 
+            opacity: 0; 
+        }
+
+        .floral-bottom-left { 
+            bottom: -20px; 
+            left: -20px; 
+            transform: scaleY(-1); 
+            z-index: 0; 
+            animation: secondaryFadeInBottomLeft 2s ease-in-out 1.7s forwards; 
+        }
+        
+        .floral-top-right-secondary { 
+            top: -20px; 
+            right: -20px; 
+            transform: scaleX(-1); 
+            z-index: 5; 
+            animation: secondaryFadeInTopRight 2s ease-in-out 1.7s forwards; 
+        }
+
+        /* ------------------ بەشی ناوەڕۆکی سەرەکی ------------------ */
+        .main-container {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: clamp(30px, 5vw, 50px) 20px 60px 20px;
+            min-height: 100vh;
+            min-height: 100dvh;
+            position: relative; 
+            z-index: 2; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .couple-illustration {
+            width: 100%;
+            max-width: clamp(240px, 40vw, 500px);
+            height: auto;
+            margin-bottom: clamp(25px, 5vw, 45px); 
+            mix-blend-mode: multiply;
+            opacity: 0.92;
+            animation: fadeIn 1.5s ease-in-out;
+        }
+
+        .names-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: clamp(10px, 3vw, 35px); 
+            width: 100%;
+            flex-wrap: wrap; /* Allows wrapping on extreme narrow screens */
+        }
+
+        .heart-icon { 
+            width: clamp(55px, 10vw, 130px); 
+            height: auto; 
+            mix-blend-mode: multiply; 
+            opacity: 0; 
+            animation: heartFadeIn 2s ease-in-out 3.0s forwards, heartbeat 3s infinite ease-in-out 5.0s; 
+        }
+
+        /* Fluid Typography for Names */
+        .groom-name, .bride-name {
+            font-size: clamp(2.2rem, 8vw, 4.2rem); 
+            color: #3b3b3b;
+            font-weight: normal; 
+            opacity: 0;
+            white-space: nowrap;
+        }
+
+        .groom-name { animation: slideInRight 3s cubic-bezier(0.22, 1, 0.36, 1) 4.0s forwards; }
+        .bride-name { animation: slideInLeft 3s cubic-bezier(0.22, 1, 0.36, 1) 4.0s forwards; }
+
+        /* ------------------ هێمای وەرە خوارەوە ------------------ */
+        .scroll-down-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: clamp(15px, 3vw, 25px);
+            opacity: 0;
+            gap: 2px;
+            animation: fadeSlideDown 1.5s ease-out 9.5s forwards;
+        }
+
+        .scroll-text { 
+            font-size: clamp(1rem, 2vw, 1.15rem); 
+            color: #8c7a6b; 
+            letter-spacing: 0.5px; 
+        }
+        
+        .scroll-icon { 
+            width: clamp(18px, 3vw, 22px); 
+            height: clamp(18px, 3vw, 22px); 
+            stroke: #b59c7b; stroke-width: 1.5; fill: none; stroke-linecap: round; stroke-linejoin: round; 
+            animation: smoothBounce 2.5s ease-in-out infinite; 
+        }
+
+        /* ------------------ بەشی بەروار ------------------ */
+        .invitation-details {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: clamp(25px, 5vw, 40px);
+            width: 100%;
+            max-width: 650px;
+        }
+
+        .intro-sentence { 
+            font-size: clamp(1.15rem, 3vw, 1.65rem); 
+            color: #635e59; 
+            text-align: center; 
+            margin-bottom: clamp(15px, 3vw, 25px); 
+            line-height: 1.6; 
+            opacity: 0; 
+            animation: fadeSlideUp 1.5s ease-out 7.0s forwards; 
+            padding: 0 10px;
+        }
+
+        .date-badge-wrapper { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            width: 100%; 
+            position: relative; 
+        }
+        
+        .badge-wing { 
+            flex: 1; 
+            position: relative; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            height: clamp(40px, 8vw, 60px); 
+        }
+        
+        .wing-line { position: absolute; top: 50%; height: 1px; background-color: #b8b1a8; width: 0%; }
+        .wing-right .wing-line { left: 0; animation: shootLineRight 1.2s cubic-bezier(0.65, 0, 0.35, 1) 8.0s forwards; }
+        .wing-left .wing-line { right: 0; animation: shootLineLeft 1.2s cubic-bezier(0.65, 0, 0.35, 1) 8.0s forwards; }
+        
+        .wing-text { 
+            background-color: #f9f8f6; 
+            padding: 0 clamp(6px, 2vw, 16px); 
+            font-size: clamp(1.1rem, 3vw, 1.65rem); 
+            color: #7a756e; 
+            z-index: 2; 
+            opacity: 0; 
+            white-space: nowrap;
+            animation: revealText 0.8s ease-out 8.5s forwards; 
+        }
+
+        .circle-badge-container { 
+            position: relative; 
+            width: clamp(130px, 25vw, 185px); 
+            height: clamp(130px, 25vw, 185px); 
+            flex-shrink: 0; 
+            margin: 0 clamp(5px, 2vw, 15px); 
+            z-index: 5; 
+            background: linear-gradient(135deg, #ffffff 0%, #fcfbf9 100%); 
+            border-radius: 50%;
+            box-shadow: 0 15px 35px rgba(181, 156, 123, 0.2), inset 0 0 20px rgba(181, 156, 123, 0.08); 
+            opacity: 0; 
+            transform: scale(0.85);
+            animation: badgePop 1.2s cubic-bezier(0.22, 1, 0.36, 1) 7.2s forwards;
+        }
+
+        .svg-date-ring { 
+            stroke-dasharray: 326.73; 
+            stroke-dashoffset: 326.73; 
+            stroke-linecap: round;
+            animation: drawNewRing 1.5s cubic-bezier(0.4, 0, 0.2, 1) 7.5s forwards; 
+        }
+
+        .svg-inner-ring {
+            transform-origin: 100px 100px;
+            opacity: 0;
+            animation: fadeInOpacity 1s ease-out 8.0s forwards, slowSpin 35s linear infinite 8.0s;
+        }
+        
+        .svg-day-number { 
+            font-size: 58px; 
+            fill: #3b3b3b; 
+            font-family: Arial, sans-serif;
+            font-weight: normal; 
+            opacity: 0; 
+            transform-origin: 100px 100px; 
+            will-change: opacity, transform;
+            animation: popNumber 1s cubic-bezier(0.22, 1, 0.36, 1) 8.0s forwards; 
+        }
+        
+        .svg-curved-text { 
+            font-size: 30px; 
+            fill: #8c7a6b; 
+            font-family: Arial, sans-serif;
+            letter-spacing: 2px; 
+            opacity: 0; 
+            animation: fadeInCurvedText 1s ease-out 8.0s forwards; 
+        }
+
+        /* ------------------ بەشی کارتی منداڵان (Insert Card) ------------------ */
+        .children-section-wrapper {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            margin-top: clamp(30px, 6vw, 50px);
+            opacity: 0;
+            animation: fadeSlideUp 1.2s ease-out 8.8s forwards;
+        }
+
+        .children-card {
+            background-color: #ffffff;
+            border: 1px solid #ede8e2;
+            border-radius: 20px;
+            padding: clamp(5px, 2vw, 8px); 
+            box-shadow: 0 15px 35px rgba(140, 125, 110, 0.08);
+            max-width: 500px;
+            width: 95%;
+        }
+
+        .children-card-inner {
+            border: 1.5px dashed #dcd2c5;
+            border-radius: 14px;
+            padding: clamp(15px, 4vw, 22px) clamp(10px, 3vw, 25px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .sparkle-star {
+            width: clamp(20px, 4vw, 24px);
+            height: clamp(20px, 4vw, 24px);
+            margin-bottom: clamp(8px, 2vw, 12px);
+            opacity: 0.85;
+            animation: starTwinkle 3s infinite ease-in-out;
+        }
+
+        .children-txt-main {
+            font-size: clamp(1.2rem, 3.5vw, 1.6rem);
+            color: #44403c;
+            text-align: center;
+            margin-bottom: 6px;
+            line-height: 1.5;
+        }
+
+        .children-txt-sub {
+            font-size: clamp(1.05rem, 2.5vw, 1.25rem);
+            color: #8c7a6b;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        /* ------------------ بەشی شوێن، پەیوەندی و فوتەر ------------------ */
+        .extra-section { 
+            display: flex; flex-direction: column; align-items: center; 
+            width: 100%; max-width: 650px; 
+            margin-top: clamp(40px, 8vw, 60px); 
+            text-align: center; opacity: 0; 
+        }
+        
+        .location-section { position: relative; animation: fadeSlideUp 1.2s ease-out 10.2s forwards; }
+        .contact-section { animation: fadeSlideUp 1.2s ease-out 10.9s forwards; margin-top: clamp(30px, 6vw, 40px); }
+
+        .section-title { 
+            font-size: clamp(2rem, 5vw, 2.8rem); 
+            color: #3b3b3b; margin-bottom: 15px; 
+            position: relative; z-index: 2; 
+        }
+        
+        .section-desc { 
+            font-size: clamp(1.15rem, 3vw, 1.45rem); 
+            color: #635e59; margin-bottom: clamp(20px, 4vw, 30px); 
+            line-height: 1.6; position: relative; z-index: 2; 
+            padding: 0 15px;
+        }
+
+        .border-flower { 
+            position: absolute; top: clamp(-30px, -5vw, -50px); 
+            width: clamp(150px, 35vw, 260px); 
+            pointer-events: none; mix-blend-mode: multiply; opacity: 0.85; z-index: 0; 
+        }
+        .border-flower-right { right: calc(50% - 48vw); transform: scaleX(-1); }
+        .border-flower-left { left: calc(50% - 48vw); }
+
+        .map-container { 
+            width: 100%; border-radius: 15px; overflow: hidden; 
+            border: 4px solid #fff; box-shadow: 0 15px 35px rgba(110, 90, 70, 0.1); 
+            background-color: #fff; position: relative; z-index: 2; 
+        }
+        
+        .map-container iframe { 
+            width: 100%; 
+            height: clamp(250px, 50vw, 350px); 
+            display: block; 
+        }
+
+        .contact-btn { 
+            display: inline-block; 
+            background: linear-gradient(135deg, #d4c1a5 0%, #b59c7b 100%); 
+            color: #fff; 
+            font-size: clamp(1.2rem, 3vw, 1.5rem); 
+            text-decoration: none; 
+            padding: clamp(10px, 2vw, 12px) clamp(30px, 6vw, 40px); 
+            border-radius: 30px; 
+            box-shadow: 0 10px 20px rgba(181, 156, 123, 0.3); 
+            transition: all 0.3s ease; 
+            position: relative; 
+            z-index: 2; 
+        }
+        .contact-btn:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(181, 156, 123, 0.4); }
+
+        /* ------------------ بەشی فوتەری ئاژانسی Tech Base ------------------ */
+        .site-footer { 
+            margin-top: clamp(60px, 10vw, 90px); 
+            padding: 30px 20px 45px 20px; 
+            text-align: center; 
+            opacity: 0; 
+            animation: fadeIn 1.5s ease-out 11.5s forwards; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .footer-divider {
+            width: 140px; height: 1.5px;
+            background: linear-gradient(90deg, rgba(212,193,165,0) 0%, rgba(181,156,123,0.4) 50%, rgba(212,193,165,0) 100%);
+            margin-bottom: 25px;
+        }
+
+        .designer-txt {
+            font-size: clamp(0.85rem, 2vw, 0.9rem);
+            color: #7a756e; line-height: 1.6;
+        }
+
+        .social-links-container { display: flex; gap: 12px; margin-top: 16px; }
+
+        .social-circle {
+            width: 38px; height: 38px; border-radius: 50%;
+            background-color: #ede8e2; color: #7a756e;
+            display: flex; align-items: center; justify-content: center;
+            text-decoration: none; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .social-circle:hover {
+            background-color: #b59c7b; color: #ffffff;
+            transform: translateY(-3px); box-shadow: 0 5px 15px rgba(181, 156, 123, 0.3);
+        }
+
+        /* ------------------ دوگمەی مۆسیقا ------------------ */
+        .music-float-btn {
+            position: fixed;
+            bottom: clamp(15px, 4vw, 25px);
+            left: clamp(15px, 4vw, 25px); 
+            width: clamp(42px, 10vw, 48px);
+            height: clamp(42px, 10vw, 48px);
+            border-radius: 50%;
+            background: linear-gradient(135deg, #d4c1a5 0%, #b59c7b 100%);
+            border: 2px solid #ffffff; color: #ffffff;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; box-shadow: 0 8px 20px rgba(181, 156, 123, 0.4);
+            z-index: 9999; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0; animation: badgePop 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.5s forwards;
+        }
+
+        .music-float-btn:hover { transform: scale(1.12); }
+        .music-float-btn.is-playing { animation: musicPulse 2s infinite alternate; }
+
+        @keyframes musicPulse {
+            0% { box-shadow: 0 0 0 0 rgba(181, 156, 123, 0.6); }
+            70% { box-shadow: 0 0 0 15px rgba(181, 156, 123, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(181, 156, 123, 0); }
+        }
+
+        /* --- کلیپەکانی ئەنیمەیشن --- */
+        @keyframes floralFadeInLeft { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes floralFadeInRightBottom { from { opacity: 0; transform: scale(-1, -1) translateY(-20px); } to { opacity: 1; transform: scale(-1, -1) translateY(0); } }
+        @keyframes secondaryFadeInBottomLeft { from { opacity: 0; transform: scaleY(-1) translateY(-20px); } to { opacity: 0.35; transform: scaleY(-1) translateY(0); } }
+        @keyframes secondaryFadeInTopRight { from { opacity: 0; transform: scaleX(-1) translateY(-20px); } to { opacity: 0.35; transform: scaleX(-1) translateY(0); } }
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(120px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes slideInLeft { from { opacity: 0; transform: translateX(-120px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes heartFadeIn { from { opacity: 0; transform: scale(0.85); } to { opacity: 0.85; transform: scale(1); } }
+        @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeSlideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes badgePop { to { opacity: 1; transform: scale(1); } }
+        @keyframes drawNewRing { from { stroke-dashoffset: 326.73; } to { stroke-dashoffset: 0; } }
+        @keyframes slowSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes fadeInOpacity { from { opacity: 0; } to { opacity: 1; } }
+
+        @keyframes starTwinkle {
+            0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.7; }
+            50% { transform: scale(1.25) rotate(15deg); opacity: 1; filter: drop-shadow(0 0 5px rgba(181, 156, 123, 0.6)); }
+        }
+
+        @keyframes popNumber { 0% { opacity: 0; transform: scale(0.3); } 70% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes fadeInCurvedText { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes shootLineRight { from { width: 0%; } to { width: 100%; } }
+        @keyframes shootLineLeft { from { width: 0%; } to { width: 100%; } }
+        @keyframes revealText { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes heartbeat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+        @keyframes smoothBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(7px); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 0.92; transform: translateY(0); } }
+
+        /* ------------------ بەشی بارانی گوڵ و گەڵا ------------------ */
+        .falling-item {
+            position: fixed; top: -10vh; z-index: 1; pointer-events: none; mix-blend-mode: multiply; will-change: transform, top;
+        }
+
+        .spin-wrapper { display: flex; align-items: center; justify-content: center; will-change: transform; }
+
+        @keyframes fall { 0% { top: -10vh; } 100% { top: 105vh; } }
+        @keyframes sway { 0% { transform: translateX(-25px); } 100% { transform: translateX(25px); } }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* ------------------ Media Queries (Targeting specific tight squeezes) ------------------ */
+        
+        /* Table / Standard Mobile Fallbacks */
+        @media (max-width: 768px) {
+            .floral-left { left: -20px; }
+            .floral-right { bottom: -5px; right: -5px; } 
+            .border-flower-right { right: -15px; }
+            .border-flower-left { left: -15px; }
+        }
+
+        /* Extra Small Devices (iPhone SE / Older Androids) */
+        @media (max-width: 380px) {
+            .wing-text { font-size: 1rem; padding: 0 4px; }
+            .circle-badge-container { width: 110px; height: 110px; margin: 0 2px; }
+            .badge-wing { height: 35px; }
+            .names-wrapper { flex-direction: column; gap: 5px; }
+            .heart-icon { margin: 10px 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="invitation-audio" loop preload="none">
+        <source src="m.mp3" type="audio/mpeg">
+    </audio>
+
+    <button id="music-toggle-btn" class="music-float-btn" title="لێدانی مۆسیقا">
+        <svg id="sound-off-icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>
+        </svg>
+        <svg id="sound-on-icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+        </svg>
+    </button>
+
+    <img src="sides.png" alt="دیزاینی گوڵی چەپ" class="floral-left">
+    <img src="sides.png" alt="دیزاینی گوڵی ڕاست" class="floral-right">
+    <img src="secondary.png" alt="گوڵی خوارەوەی چەپ" class="floral-bottom-left">
+    <img src="secondary.png" alt="گوڵی سەرەوەی ڕاست" class="floral-top-right-secondary">
+
+    <div class="main-container">
+        <img src="couple.png" alt="بووک و زاوا" class="couple-illustration">
+
+        <div class="names-wrapper">
+            <h1 class="groom-name">ڕاسپێر</h1>
+            <img src="heart.png" alt="دڵ" class="heart-icon">
+            <h1 class="bride-name">ئاسوودە</h1>
+        </div>
+
+        <div class="invitation-details">
+            <p class="intro-sentence">بەوپەڕی خۆشحاڵییەوە بانگهێشتتان دەکەین بۆ ئامادەبوون لە ئاهەنگی هاوسەرگیریمان لە ڕۆژی</p> 
+            <br>
+              <p class="intro-sentence">٢٦/٦/٢٠٢٦</p>
+            <div class="date-badge-wrapper">
+                <div class="badge-wing wing-right">
+                    <div class="wing-line"></div>
+                    <span class="wing-text">هەینی</span>
+                </div>
+
+                <div class="circle-badge-container">
+                    <svg viewBox="0 0 200 200" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+                        <defs>
+                            <path id="arc-top" d="M 38,100 A 62,62 0 0,1 162,100" />
+                            <path id="arc-bottom" d="M 162,100 A 62,62 0 0,1 38,100" />
+                        </defs>
+                        <circle class="svg-inner-ring" cx="100" cy="100" r="43" fill="none" stroke="#d4c1a5" stroke-width="1.5" stroke-dasharray="4,4" />
+                        <circle class="svg-date-ring" cx="100" cy="100" r="52" fill="none" stroke="#b59c7b" stroke-width="2.5" />
+                        
+                        <text class="svg-day-number" x="100" y="118" text-anchor="middle">٢٦</text>
+                        <text class="svg-curved-text" dir="rtl" xml:lang="ku" style="direction:rtl;unicode-bidi:isolate;"><textPath href="#arc-top" startOffset="50%" text-anchor="middle">٦</textPath></text>
+                        <text class="svg-curved-text" dir="rtl" xml:lang="ku" style="direction:rtl;unicode-bidi:isolate;"><textPath href="#arc-bottom" startOffset="50%" text-anchor="middle">٢٠٢٦</textPath></text>
+                    </svg>
+                </div>
+
+                <div class="badge-wing wing-left">
+                    <div class="wing-line"></div>
+                    <span class="wing-text">٦:٣٠ ئێوارە</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="scroll-down-wrapper">
+            <span class="scroll-text">وەرە خوارەوە</span>
+            <svg class="scroll-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 9L12 15L18 9" />
+            </svg>
+        </div>
+
+        <div class="extra-section location-section">
+            <img src="secondary.png" alt="دیزاینی لێواری ڕاست" class="border-flower border-flower-right" style="opacity: 0.5;">
+            <img src="secondary.png" alt="دیزاینی لێواری چەپ" class="border-flower border-flower-left" style="opacity: 0.5;">
+            <h2 class="section-title">شوێن</h2>
+            <p class="section-desc">هۆڵی ڕامادا، شەقامی سالم، نزیک کتێبخانەی گشتی</p>
+            <div class="map-container">
+                <iframe 
+                    src="https://maps.google.com/maps?q=Ramada+by+Wyndham+Sulaymaniyah+Salim+Street&t=&z=16&ie=UTF8&iwloc=&output=embed" 
+                    style="border:0;" 
+                    allowfullscreen="" 
+                    loading="lazy" 
+                    referrerpolicy="no-referrer-when-downgrade">
+                </iframe>
+            </div>
+        </div>
+
+        <div class="children-section-wrapper">
+            <div class="children-card">
+                <div class="children-card-inner">
+                    <svg class="sparkle-star" viewBox="0 0 24 24">
+                        <path fill="#b59c7b" d="M12 0 L14.5 9.5 L24 12 L14.5 14.5 L12 24 L9.5 14.5 L0 12 L9.5 9.5 Z"/>
+                    </svg>
+                    <div class="children-txt-main">خەوێکی شیرین بۆ منداڵە چاوگەشەکانتان دەخوازین</div>
+                    <div class="children-txt-sub">هیوای شەوێکی ئارامیان لە ماڵەوە بۆ دەخوازین</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="extra-section contact-section">
+            <h2 class="section-title">پەیوەندی</h2>
+            <p class="section-desc">بۆ زانیاری زیاتر دەربارەی بۆنەکە دەتوانن پەیوەندیمان پێوە بکەن</p>
+            <a href="https://wa.me/7501880800" class="contact-btn">پەیوەندیکردن</a>
+        </div>
+
+        <footer class="site-footer">
+            <div class="footer-divider"></div>
+            <p class="designer-txt">ئەم کارتە دیجیتاڵییە جوانە دیزاینکراوە لەلایەن Tech Base وە</p>
+            
+            <div class="social-links-container">
+                <a href="https://www.facebook.com/profile.php?id=61577680222996" target="_blank" class="social-circle" title="فەیسبووکی Tech Base">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                </a>
+                <a href="https://www.instagram.com/techbasekrd?igsh=MWg5NGg3bm8zdnJ1bw==" target="_blank" class="social-circle" title="ئینستاگرامی Tech Base">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                </a>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // 1. بەشی مۆسیقا (Audio logic)
+        const music = document.getElementById('invitation-audio');
+        const musicBtn = document.getElementById('music-toggle-btn');
+        const iconOff = document.getElementById('sound-off-icon');
+        const iconOn = document.getElementById('sound-on-icon');
+        let isAudioPlaying = false;
+
+        function setMusicState(play) {
+            if (play) {
+                music.play().then(() => {
+                    isAudioPlaying = true;
+                    iconOff.style.display = 'none';
+                    iconOn.style.display = 'block';
+                    musicBtn.classList.add('is-playing');
+                }).catch(() => {});
+            } else {
+                music.pause();
+                isAudioPlaying = false;
+                iconOn.style.display = 'none';
+                iconOff.style.display = 'block';
+                musicBtn.classList.remove('is-playing');
+            }
+        }
+
+        function forceMusicOnFirstTouch(event) {
+            if (event.target.closest('#music-toggle-btn')) return;
+
+            if (!isAudioPlaying) {
+                setMusicState(true);
+            }
+
+            ['click', 'touchstart', 'pointerdown', 'scroll'].forEach(eventType => {
+                window.removeEventListener(eventType, forceMusicOnFirstTouch, { capture: true });
+            });
+        }
+
+        ['click', 'touchstart', 'pointerdown', 'scroll'].forEach(eventType => {
+            window.addEventListener(eventType, forceMusicOnFirstTouch, { once: true, capture: true });
+        });
+
+        musicBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            setMusicState(!isAudioPlaying);
+        });
+
+        // 2. بەشی بارانی گوڵەکان (Falling leaves logic)
+        function startGentleRain() {
+            const count = window.innerWidth < 600 ? 8 : 14;
+            const body = document.body;
+            const svgs = [
+                '<svg viewBox="0 0 24 24" width="22" height="22"><path fill="#b59c7b" d="M3 3 C3 12 12 21 21 21 C21 12 12 3 3 3 Z"/></svg>',
+                '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="#e69c9f" d="M12 2 C8 2 4 6 4 12 C4 18 12 22 12 22 C12 22 20 18 20 12 C20 6 16 2 12 2 Z"/></svg>',
+                '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="#8c7a6b" d="M3 21 C3 12 12 3 21 3 C21 12 12 21 3 21 Z"/></svg>'
+            ];
+
+            for(let i = 0; i < count; i++) {
+                let flake = document.createElement('div');
+                flake.className = 'falling-item';
+                let shape = svgs[Math.floor(Math.random() * svgs.length)];
+                let left = Math.random() * 94; 
+                let duration = 15 + Math.random() * 20; 
+                let delay = Math.random() * 15; 
+                let swayTime = 3 + Math.random() * 4;
+                let scale = 0.5 + Math.random() * 0.5; 
+
+                flake.style.left = `${left}vw`;
+                flake.style.transform = `scale(${scale})`;
+                flake.style.animation = `fall ${duration}s linear ${delay}s infinite, sway ${swayTime}s ease-in-out ${delay}s infinite alternate`;
+                flake.innerHTML = `<div class="spin-wrapper" style="animation: spin ${duration * 0.8}s linear infinite;">${shape}</div>`;
+                body.appendChild(flake);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(startGentleRain, 6000); 
+        });
+    </script>
+</body>
+</html>
